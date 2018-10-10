@@ -11,7 +11,6 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 using System.Web.Http;
 
 namespace LNF.WebApi.Control.Controllers
@@ -31,26 +30,26 @@ namespace LNF.WebApi.Control.Controllers
         }
 
         [BasicAuthentication, Route("block/{blockId}")]
-        public async Task<BlockResponse> GetBlockState(int blockId)
+        public BlockResponse GetBlockState(int blockId)
         {
             Block block = DA.Current.Single<Block>(blockId);
 
             if (block == null)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
-            var blockResponse = await ServiceProvider.Current.Control.GetBlockState(block);
+            var blockResponse = ServiceProvider.Current.Control.GetBlockState(block);
             return blockResponse;
         }
 
         [BasicAuthentication, HttpGet, Route("point/{pointId}/{state}")]
-        public async Task<PointResponse> SetPointState(int pointId, string state, uint duration = 0)
+        public PointResponse SetPointState(int pointId, string state, uint duration = 0)
         {
             var point = DA.Current.Single<Point>(pointId);
 
             if (point == null)
                 throw new HttpResponseException(HttpStatusCode.NotFound);
 
-            var pointResponse = await ServiceProvider.Current.Control.SetPointState(point, GetState(state), duration);
+            var pointResponse = ServiceProvider.Current.Control.SetPointState(point, GetState(state), duration);
 
             return pointResponse;
         }
@@ -62,7 +61,7 @@ namespace LNF.WebApi.Control.Controllers
         }
 
         [HttpGet, Route("status")]
-        public async Task<IEnumerable<ToolStatus>> GetToolStatus()
+        public IEnumerable<ToolStatus> GetToolStatus()
         {
             DataTable dt = new DataTable();
 
@@ -74,7 +73,7 @@ namespace LNF.WebApi.Control.Controllers
                 conn.Close();
             }
 
-            await WagoInterlock.AllToolStatus(dt);
+            WagoInterlock.AllToolStatus(dt);
 
             var result = dt.AsEnumerable().Select(x => new ToolStatus()
             {
@@ -98,7 +97,7 @@ namespace LNF.WebApi.Control.Controllers
         }
 
         [BasicAuthentication, HttpGet, Route("action/{name}/{actionId}")]
-        public async Task<PointState> GetPointState(string name, int actionId)
+        public PointState GetPointState(string name, int actionId)
         {
             var act = DA.Current.Query<ActionInstance>().FirstOrDefault(x => x.ActionName.ToLower() == name.ToLower() && x.ActionID == actionId);
 
@@ -107,7 +106,7 @@ namespace LNF.WebApi.Control.Controllers
 
             var point = act.GetPoint();
 
-            var blockResponse = await ServiceProvider.Current.Control.GetBlockState(point.Block);
+            var blockResponse = ServiceProvider.Current.Control.GetBlockState(point.Block);
 
             var pointState = blockResponse.BlockState.Points.First(x => x.PointID == act.Point);
 
@@ -115,7 +114,7 @@ namespace LNF.WebApi.Control.Controllers
         }
 
         [BasicAuthentication, HttpGet, Route("action/{name}/{actionId}/{state}")]
-        public async Task<PointResponse> SetPointState(string name, int actionId, string state, uint duration = 0)
+        public PointResponse SetPointState(string name, int actionId, string state, uint duration = 0)
         {
             var act = DA.Current.Query<ActionInstance>().FirstOrDefault(x => x.ActionName.ToLower() == name.ToLower() && x.ActionID == actionId);
 
@@ -124,7 +123,7 @@ namespace LNF.WebApi.Control.Controllers
 
             var point = act.GetPoint();
 
-            var pointResponse = await ServiceProvider.Current.Control.SetPointState(point, GetState(state), 0);
+            var pointResponse = ServiceProvider.Current.Control.SetPointState(point, GetState(state), 0);
 
             return pointResponse;
         }
